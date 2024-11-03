@@ -1,0 +1,157 @@
+<!--
+Programa: Colisão dos quadrados.
+Nome: Davi Martins. Nº 03.2B
+Nome: Gabrielle Léo. Nº 10.2B
+Nome: Gustavo Batista. Nº 13.2B
+Nome: Igor  de Oliveira. Nº 14.2B
+Nome: Leandro Delavale. Nº 18.2B
+DESCRIÇÃO: O usuário pode movimentar o quadrado usando os botões "Cima", "Baixo", "Esquerda" e "Direita", ou as teclas correspondentes "W", "S", "A" e "D" no teclado. Há também uma função de detecção de colisão: quando o quadrado se aproxima do círculo, a mensagem "Colidiu!" aparece em vermelho abaixo do canvas.
+-->
+<!DOCTYPE html> 
+<html lang="pt-BR"> 
+<head> 
+<meta charset="UTF-8"> 
+<title>Movimento do Quadrado</title>
+<style> 
+.botoes-container { margin-top: 20px; } 
+.botao { font-size: 16px; margin: 5px; padding: 10px; }  
+#mensagem { font-size: 20px; color: red; margin-top: 10px; }  // Estilos.
+</style>
+</head> 
+<body>
+<canvas id="canvas" width="400" height="400" style="border:1px solid #000000;"></canvas> 
+<div id="mensagem"></div> <!-- Desenho, Tamanho, Borda e Mensagem. -->
+
+<div class="botoes-container">
+    <button class="botao" onmousedown="iniciarMovimento('cima')" onmouseup="pararMovimento()">Cima</button>
+    <button class="botao" onmousedown="iniciarMovimento('baixo')" onmouseup="pararMovimento()">Baixo</button>
+    <button class="botao" onmousedown="iniciarMovimento('esquerda')" onmouseup="pararMovimento()">Esquerda</button>
+    <button class="botao" onmousedown="iniciarMovimento('direita')" onmouseup="pararMovimento()">Direita</button>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const mensagem = document.getElementById('mensagem');
+
+// Configurações do quadrado
+var quadrado = { 
+  x: 175,
+  y: 175,
+  tamanho: 50, 
+  passo: 10 
+};
+
+// Configurações do círculo
+var circulo = {
+  x: 300,
+  y: 200,
+  raio: 30
+};
+
+var intervaloMovimento; // Controle do movimento.
+var direcaoAtual = null; // Armazena a direção atual
+
+function desenharQuadrado() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Desenha o quadrado
+    ctx.fillStyle = 'pink';
+    ctx.fillRect(quadrado.x, quadrado.y, quadrado.tamanho, quadrado.tamanho); 
+
+    // Desenha o círculo
+    ctx.beginPath();
+    ctx.arc(circulo.x, circulo.y, circulo.raio, 0, Math.PI * 2);
+    ctx.fillStyle = 'black';
+    ctx.fill(); // Preenche com a cor.
+    ctx.closePath(); // Caminho.
+
+    // Verifica colisão
+    verificarColisao();
+}
+
+function mover(direcao) {
+    // Calcula a nova posição potencial do quadrado
+    let novaPosicao = { x: quadrado.x, y: quadrado.y };
+
+    if (direcao === 'cima') {
+        novaPosicao.y -= quadrado.passo;
+    }
+    if (direcao === 'baixo') {
+        novaPosicao.y += quadrado.passo;
+    }
+    if (direcao === 'esquerda') {
+        novaPosicao.x -= quadrado.passo;
+    }
+    if (direcao === 'direita') {
+        novaPosicao.x += quadrado.passo;
+    }
+
+    // Verifica se a nova posição está dentro dos limites do canvas
+    if (novaPosicao.x < 0) novaPosicao.x = 0;
+    if (novaPosicao.x > canvas.width - quadrado.tamanho) novaPosicao.x = canvas.width - quadrado.tamanho;
+    if (novaPosicao.y < 0) novaPosicao.y = 0;
+    if (novaPosicao.y > canvas.height - quadrado.tamanho) novaPosicao.y = canvas.height - quadrado.tamanho;
+
+    // Verifica colisão com a nova posição
+    if (verificarColisaoComNovaPosicao(novaPosicao)) {
+        mensagem.innerText = 'Colidiu!'; // Atualiza a mensagem se colidir
+        pararMovimento(); // Para o movimento ao colidir
+    } else {
+        // Se não colidiu, atualiza a posição do quadrado
+        quadrado.x = novaPosicao.x;
+        quadrado.y = novaPosicao.y;
+    }
+    
+    desenharQuadrado();
+}
+
+function verificarColisaoComNovaPosicao(novaPosicao) {
+    const distanciaX = novaPosicao.x + quadrado.tamanho / 2 - circulo.x;
+    const distanciaY = novaPosicao.y + quadrado.tamanho / 2 - circulo.y;
+    const distancia = Math.sqrt(distanciaX * distanciaX + distanciaY * distanciaY);
+
+    return distancia < quadrado.tamanho / 2 + circulo.raio; // Retorna true se colidir
+}
+
+function iniciarMovimento(direcao) {
+    direcaoAtual = direcao; // Atualiza a direção atual
+    intervaloMovimento = setInterval(() => mover(direcao), 100); // 0,1 segundos, movendo 
+}
+
+function pararMovimento() {
+    clearInterval(intervaloMovimento);
+    direcaoAtual = null; // Reseta a direção
+}
+
+// Adiciona evento de teclado
+document.addEventListener('keydown', (event) => {
+    switch (event.key) {
+        case 'w': // Para cima
+            iniciarMovimento('cima');
+            break;
+        case 's': // Para baixo
+            iniciarMovimento('baixo');
+            break;
+        case 'a': // Para esquerda
+            iniciarMovimento('esquerda');
+            break;
+        case 'd': // Para direita
+            iniciarMovimento('direita');
+            break;
+        case 'q': // Para parar
+            pararMovimento();
+            break;
+    }
+});
+
+document.addEventListener('keyup', (event) => {
+    if (['w', 'a', 's', 'd'].includes(event.key)) {
+        pararMovimento();
+    }
+});
+
+desenharQuadrado(); // Quando reinicia a página.
+</script>
+</body>
+</html>
