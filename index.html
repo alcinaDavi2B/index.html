@@ -1,0 +1,155 @@
+<!--
+Programa: Colisão dos quadrados.
+Nome: Davi Martins. Nº 03. 2ºB.
+Nome: Gabrielle Léo. Nº 10.
+Nome: Gustavo Batista. Nº 13.
+Nome: Igor de Oliveira. Nº 14.
+Nome: Leandro Delavale. Nº 18.
+DESCRIÇÃO: O usuário pode movimentar o quadrado usando os botões "Cima", "Baixo", "Esquerda" e "Direita", ou as teclas correspondentes "W", "S", "A" e "D" no teclado. Há também uma função de detecção de colisão: quando o quadrado se aproxima do círculo, a mensagem "Colidiu!" aparece em vermelho abaixo do canvas.
+-->
+<!DOCTYPE html> 
+<html lang="pt-BR"> 
+<head> 
+<meta charset="UTF-8"> 
+<title>Movimento do Quadrado e Círculo com Colisão</title>
+<style> 
+.botoes-container { margin-top: 20px; } 
+.botao { font-size: 16px; margin: 5px; padding: 10px; }  
+#mensagem { font-size: 20px; color: red; margin-top: 10px; }
+</style>
+</head> 
+<body>
+<canvas id="canvas" width="400" height="400" style="border:1px solid #000000;"></canvas> 
+<div id="mensagem"></div>
+
+<div class="botoes-container">
+    <button class="botao" onmousedown="iniciarMovimentoCirculo('cima')" onmouseup="pararMovimentoCirculo()">Cima</button>
+    <button class="botao" onmousedown="iniciarMovimentoCirculo('baixo')" onmouseup="pararMovimentoCirculo()">Baixo</button>
+    <button class="botao" onmousedown="iniciarMovimentoCirculo('esquerda')" onmouseup="pararMovimentoCirculo()">Esquerda</button>
+    <button class="botao" onmousedown="iniciarMovimentoCirculo('direita')" onmouseup="pararMovimentoCirculo()">Direita</button>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const mensagem = document.getElementById('mensagem');
+
+// Configurações do quadrado
+var quadrado = { 
+  x: 175,
+  y: 175,
+  tamanho: 50, 
+  passo: 10 
+};
+
+// Configurações do círculo
+var circulo = {
+  x: 300,
+  y: 200,
+  raio: 30,
+  passo: 10
+};
+
+var intervaloMovimentoCirculo;
+var direcaoAtualCirculo = null;
+
+function desenhar() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Desenha o quadrado
+    ctx.fillStyle = 'pink';
+    ctx.fillRect(quadrado.x, quadrado.y, quadrado.tamanho, quadrado.tamanho);
+
+    // Desenha o círculo
+    ctx.beginPath();
+    ctx.arc(circulo.x, circulo.y, circulo.raio, 0, Math.PI * 2);
+    ctx.fillStyle = 'black';
+    ctx.fill();
+    ctx.closePath();
+
+    verificarColisao();
+}
+
+function moverQuadrado(direcao) {
+    if (!verificarColisao()) {
+        let novaPosicao = { x: quadrado.x, y: quadrado.y };
+        if (direcao === 'cima') novaPosicao.y -= quadrado.passo;
+        if (direcao === 'baixo') novaPosicao.y += quadrado.passo;
+        if (direcao === 'esquerda') novaPosicao.x -= quadrado.passo;
+        if (direcao === 'direita') novaPosicao.x += quadrado.passo;
+        novaPosicao = limitarMovimento(novaPosicao, quadrado.tamanho);
+        quadrado.x = novaPosicao.x;
+        quadrado.y = novaPosicao.y;
+        desenhar();
+    }
+}
+
+function moverCirculo(direcao) {
+    if (!verificarColisao()) {
+        let novaPosicao = { x: circulo.x, y: circulo.y };
+        if (direcao === 'cima') novaPosicao.y -= circulo.passo;
+        if (direcao === 'baixo') novaPosicao.y += circulo.passo;
+        if (direcao === 'esquerda') novaPosicao.x -= circulo.passo;
+        if (direcao === 'direita') novaPosicao.x += circulo.passo;
+        novaPosicao = limitarMovimento(novaPosicao, circulo.raio * 2);
+        circulo.x = novaPosicao.x;
+        circulo.y = novaPosicao.y;
+        desenhar();
+    } else {
+        pararMovimentoCirculo();
+    }
+}
+
+function limitarMovimento(posicao, tamanho) {
+    if (posicao.x < 0) posicao.x = 0;
+    if (posicao.x > canvas.width - tamanho) posicao.x = canvas.width - tamanho;
+    if (posicao.y < 0) posicao.y = 0;
+    if (posicao.y > canvas.height - tamanho) posicao.y = canvas.height - tamanho;
+    return posicao;
+}
+
+function verificarColisao() {
+    const distanciaX = quadrado.x + quadrado.tamanho / 2 - circulo.x;
+    const distanciaY = quadrado.y + quadrado.tamanho / 2 - circulo.y;
+    const distancia = Math.sqrt(distanciaX * distanciaX + distanciaY * distanciaY);
+
+    if (distancia < quadrado.tamanho / 2 + circulo.raio) {
+        mensagem.innerText = 'Colidiu!';
+        return true; // Retorna true se houve colisão
+    } else {
+        mensagem.innerText = '';
+        return false; // Retorna false se não houve colisão
+    }
+}
+
+function iniciarMovimentoCirculo(direcao) {
+    direcaoAtualCirculo = direcao;
+    intervaloMovimentoCirculo = setInterval(() => moverCirculo(direcao), 100);
+}
+
+function pararMovimentoCirculo() {
+    clearInterval(intervaloMovimentoCirculo);
+    direcaoAtualCirculo = null;
+}
+
+document.addEventListener('keydown', (event) => {
+    switch (event.key) {
+        case 'w':
+            moverQuadrado('cima');
+            break;
+        case 's':
+            moverQuadrado('baixo');
+            break;
+        case 'a':
+            moverQuadrado('esquerda');
+            break;
+        case 'd':
+            moverQuadrado('direita');
+            break;
+    }
+});
+
+desenhar();
+</script>
+</body>
+</html>
